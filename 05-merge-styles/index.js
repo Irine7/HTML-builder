@@ -1,43 +1,28 @@
 const fs = require('fs');
-const path = require ('path');
+const path = require('path');
 
 // Создаем функцию для bundle styles
-function createBundle() {
-	const stylesFolder = path.resolve(__dirname, 'styles');
-	const bundlePath = path.resolve(__dirname, 'project-dist', 'bundle.css');
+async function createCssBundle() {
+	const stylesDirectory = path.join(__dirname, 'styles');
+	const bundlePath = path.join(__dirname, 'project-dist', 'bundle.css');
 
-	// Читаем содержимое папки styles
-	fs.readdir(stylesFolder, { withFileTypes: true }, (err, files) => {
-		if (err) {
-			console.error('Error reading styles folder:', err);
-			return;
-		}
+	try {
+		const files = await fs.promises.readdir(stylesDirectory, { withFileTypes: true });
 
 		// Фильтруем файлы с нужным расширением
 		const cssFiles = files
 			.filter(file => file.isFile() && path.extname(file.name) === '.css')
-			.map(file => path.resolve(stylesFolder, file.name));
+			.map(file => path.join(stylesDirectory, file.name));
 
 		// Читаем файлы стилей
-		Promise.all(cssFiles.map(file => fs.promises.readFile(file, 'utf8')))
-			.then(contents => {
-				// Записываем прочитанные данные в массив
-				const bundleContent = contents.join('\n');
+		const contents = await Promise.all(cssFiles.map(file => fs.promises.readFile(file, 'utf8')));
+		const bundleContent = contents.join('\n');
+		await fs.promises.writeFile(bundlePath, bundleContent);
 
-				// Записываем массив стилей в bundle.css
-				fs.writeFile(bundlePath, bundleContent, err => {
-					if (err) {
-						console.error('Error writing bundle file:', err);
-						return;
-					}
-					
-					console.log('CSS bundle was created!');
-				});
-			})
-			.catch(error => {
-				console.error('Error reading CSS files:', error);
-			});
-	});
+		console.log('CSS bundle was created.');
+	} catch (error) {
+		console.error('Error creating CSS bundle.', error);
+	}
 }
 
-createBundle();
+createCssBundle();
