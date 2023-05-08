@@ -56,6 +56,7 @@ footer .container {
   background-image: url('assets/svg/telegram.svg');
   background-size: 26px;
 }
+
 @font-face {
   font-family: 'Karolina';
   src: url('assets/fonts/Karolina-Regular.woff2') format('woff2');
@@ -237,6 +238,7 @@ header .container {
 .header-button:active {
   background-color: #8F5515;
 }
+
 main .container {
   padding-top: 120px;
   padding-bottom: 120px;
