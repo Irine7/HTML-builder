@@ -7,7 +7,7 @@ const assetsFolderPath = path.join(__dirname, 'assets');
 const templateFilePath = path.join(__dirname, 'template.html');
 let outputFolderPath = path.join(__dirname, 'project-dist');
 
-// Читаем шаблонный файл
+// Читаем шаблонный файл:
 async function readTemplateFile() {
 	try {
 		const templateContent = await fs.promises.readFile(templateFilePath, 'utf8');
