@@ -7,28 +7,6 @@ const assetsFolderPath = path.join(__dirname, 'assets');
 const templateFilePath = path.join(__dirname, 'template.html');
 let outputFolderPath = path.join(__dirname, 'project-dist');
 
-async function copyFolder(sourceFolderPath, targetFolderPath) {
-	try {
-		await fs.promises.mkdir(targetFolderPath);
-		const files = await fs.promises.readdir(sourceFolderPath);
-
-		for (const file of files) {
-			const sourcePath = path.join(sourceFolderPath, file);
-			const targetPath = path.join(targetFolderPath, file);
-			const fileStat = await fs.promises.stat(sourcePath);
-
-			if (fileStat.isFile()) {
-				await fs.promises.copyFile(sourcePath, targetPath);
-			} else if (fileStat.isDirectory()) {
-				await copyFolder(sourcePath, targetPath);
-			}
-		}
-		console.log(`Copied folder from ${sourceFolderPath} to ${targetFolderPath} successfully!`);
-	} catch (error) {
-		console.error(`Error copying folder from ${sourceFolderPath} to ${targetFolderPath}:`, error);
-	}
-}
-
 // Читаем шаблонный файл
 async function readTemplateFile() {
 	try {
@@ -73,7 +51,7 @@ async function createIndexHtml(content) {
 	const outputPath = path.join(outputFolderPath, 'index.html');
 	try {
 		await fs.promises.writeFile(outputPath, content, 'utf8');
-		console.log('index.html created successfully!');
+		console.log('index.html was created');
 	} catch (error) {
 		console.error('Error creating index.html:', error);
 		throw error;
@@ -98,7 +76,7 @@ async function createCssBundle() {
 	const bundlePath = path.join(outputFolderPath, 'style.css');
 	try {
 		await fs.promises.writeFile(bundlePath, cssContent.join('\n'), 'utf8');
-		console.log('style.css created successfully!');
+		console.log('style.css created');
 	} catch (error) {
 		console.error('Error creating style.css:', error);
 		throw error;
@@ -108,7 +86,7 @@ async function createCssBundle() {
 // Копируем папку assets
 async function copyFolder(sourceFolderPath, targetFolderPath) {
 	try {
-		await fs.promises.mkdir(targetFolderPath);
+		await fs.promises.mkdir(targetFolderPath, { recursive: true });
 
 		const files = await fs.promises.readdir(sourceFolderPath);
 
@@ -119,13 +97,27 @@ async function copyFolder(sourceFolderPath, targetFolderPath) {
 			const fileStat = await fs.promises.stat(sourcePath);
 
 			if (fileStat.isFile()) {
+
+				// Проверяем, существует ли файл в папке назначения
+				const targetFileExists = await fs.promises
+					.access(targetPath)
+					.then(() => true)
+					.catch(() => false);
+
+				// Если файл уже существует, то пропускаем его
+				if (targetFileExists) {
+					console.log(`File ${file} already exists in the target folder.`);
+					continue;
+				}
+
 				await fs.promises.copyFile(sourcePath, targetPath);
 				console.log(`Copied ${file} to assets folder`);
 			} else if (fileStat.isDirectory()) {
 				await copyFolder(sourcePath, targetPath);
 			}
 		}
-		console.log(`Copied folder from ${sourceFolderPath} to ${targetFolderPath} successfully!`);
+
+		console.log(`Copied folder from ${sourceFolderPath} to ${targetFolderPath}`);
 	} catch (error) {
 		console.error(`Error copying folder from ${sourceFolderPath} to ${targetFolderPath}:`, error);
 		throw error;
@@ -138,21 +130,19 @@ async function copyAssetsFolder() {
 	const destFolder = path.join(outputFolderPath, 'assets');
 
 	try {
-		await fs.promises.access(destFolder);
-	} catch (error) {
-		if (error.code === 'ENOENT') {
-			// Создать папку, если она не существует
 			await fs.promises.mkdir(destFolder, { recursive: true });
-		} else {
-			throw error; // Пробросить ошибку, если возникла другая ошибка
-		}
+			console.log(`Created folder ${destFolder}`);
+	} catch (error) {
+			console.error(`Error creating folder ${destFolder}:`, error);
+			throw error;
 	}
 
 	try {
-		await copyFilesRecursively(srcFolder, destFolder);
-		console.log('Assets folder copied successfully');
+			await copyFolder(srcFolder, destFolder);
+			console.log('Assets folder was copied');
 	} catch (error) {
-		console.error('Error copying assets folder:', error);
+			console.error('Error copying assets folder:', error);
+			throw error;
 	}
 }
 
@@ -208,7 +198,7 @@ async function buildPage() {
 		// Создаем папку assets если ее нет и копируем содержимое
 		await copyAssetsFolder();
 
-		console.log('Page built successfully!');
+		console.log('Page was built');
 	} catch (error) {
 		console.error('Error building the page:', error);
 	}
